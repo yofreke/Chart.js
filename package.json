@@ -48,6 +48,7 @@
     "main": "Chart.js"
   },
   "dependencies": {
+    "canvas-prebuilt": "^1.6.5-prerelease.1",
     "chartjs-color": "^2.1.0",
     "moment": "^2.18.1"
   }

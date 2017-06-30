@@ -1,3 +1,5 @@
+var CanvasCtor = require('canvas-prebuilt');
+
 /*!
  * Chart.js
  * http://chartjs.org/
@@ -7941,7 +7943,7 @@ module.exports = function(Chart) {
 				// Skip animation frame requests until the active one is executed.
 				// This can happen when processing mouse events, e.g. 'mousemove'
 				// and 'mouseout' events will trigger multiple renders.
-				me.request = helpers.requestAnimFrame.call(window, function() {
+				me.request = helpers.requestAnimFrame.call(global, function() {
 					me.request = null;
 					me.startDigest();
 				});
@@ -9980,14 +9982,15 @@ module.exports = function(Chart) {
 				callback();
 			};
 		}
-		return window.requestAnimationFrame ||
-			window.webkitRequestAnimationFrame ||
-			window.mozRequestAnimationFrame ||
-			window.oRequestAnimationFrame ||
-			window.msRequestAnimationFrame ||
-			function(callback) {
-				return window.setTimeout(callback, 1000 / 60);
-			};
+		// return window.requestAnimationFrame ||
+		// 	window.webkitRequestAnimationFrame ||
+		// 	window.mozRequestAnimationFrame ||
+		// 	window.oRequestAnimationFrame ||
+		// 	window.msRequestAnimationFrame ||
+		// 	function(callback) {
+		// 		return window.setTimeout(callback, 1000 / 60);
+		// 	};
+		return setTimeout(callback, 1000 / 60);
 	}());
 	// -- DOM methods
 	helpers.getRelativePosition = function(evt, chart) {
@@ -10105,7 +10108,7 @@ module.exports = function(Chart) {
 			document.defaultView.getComputedStyle(el, null).getPropertyValue(property);
 	};
 	helpers.retinaScale = function(chart, forceRatio) {
-		var pixelRatio = chart.currentDevicePixelRatio = forceRatio || window.devicePixelRatio || 1;
+		var pixelRatio = chart.currentDevicePixelRatio = forceRatio || (typeof window !== 'undefined' ? window.devicePixelRatio : 1);
 		if (pixelRatio === 1) {
 			return;
 		}
@@ -10196,9 +10199,9 @@ module.exports = function(Chart) {
 		} :
 		function(value) {
 			/* global CanvasGradient */
-			if (value instanceof CanvasGradient) {
-				value = Chart.defaults.global.defaultColor;
-			}
+			// if (value instanceof CanvasGradient) {
+			// 	value = Chart.defaults.global.defaultColor;
+			// }
 
 			return color(value);
 		};
@@ -14598,12 +14601,19 @@ module.exports = function(Chart) {
 	 * to determine the aspect ratio to apply in case no explicit height has been specified.
 	 */
 	function initCanvas(canvas, config) {
-		var style = canvas.style;
+		var style = canvas.style || {};
 
 		// NOTE(SB) canvas.getAttribute('width') !== canvas.width: in the first case it
 		// returns null or '' if no explicit value has been set to the canvas attribute.
-		var renderHeight = canvas.getAttribute('height');
-		var renderWidth = canvas.getAttribute('width');
+		var renderHeight;
+		var renderWidth;
+		if (canvas.getAttribute) {
+			renderHeight = canvas.getAttribute('height');
+			renderWidth = canvas.getAttribute('width');
+		} else {
+			renderHeight = canvas.height;
+			renderWidth = canvas.width;
+		}
 
 		// Chart.js modifies some canvas values that we want to restore on destroy
 		canvas._chartjs = {
@@ -14672,6 +14682,9 @@ module.exports = function(Chart) {
 	var eventListenerOptions = supportsEventListenerOptions? {passive: true} : false;
 
 	function addEventListener(node, type, listener) {
+		if (!node.addEventListener) {
+			return;
+		}
 		node.addEventListener(type, listener, eventListenerOptions);
 	}
 
@@ -14744,7 +14757,7 @@ module.exports = function(Chart) {
 		var notify = function() {
 			if (!stub.ticking) {
 				stub.ticking = true;
-				helpers.requestAnimFrame.call(window, function() {
+				helpers.requestAnimFrame.call(global, function() {
 					if (stub.resizer) {
 						stub.ticking = false;
 						return listener(createEvent('resize', chart));
@@ -14862,7 +14875,9 @@ module.exports = function(Chart) {
 			var canvas = chart.canvas;
 			if (type === 'resize') {
 				// Note: the resize event is not supported on all browsers.
-				addResizeListener(canvas.parentNode, listener, chart);
+				if (canvas.parentNode) {
+					addResizeListener(canvas.parentNode, listener, chart);
+				}
 				return;
 			}
 

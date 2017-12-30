@@ -50,12 +50,19 @@ function readUsedSize(element, property) {
  * to determine the aspect ratio to apply in case no explicit height has been specified.
  */
 function initCanvas(canvas, config) {
-	var style = canvas.style;
+	var style = canvas.style || {};
 
 	// NOTE(SB) canvas.getAttribute('width') !== canvas.width: in the first case it
 	// returns null or '' if no explicit value has been set to the canvas attribute.
-	var renderHeight = canvas.getAttribute('height');
-	var renderWidth = canvas.getAttribute('width');
+	var renderHeight;
+	var renderWidth;
+	if (canvas.getAttribute) {
+		renderHeight = canvas.getAttribute('height');
+		renderWidth = canvas.getAttribute('width');
+	} else {
+		renderHeight = canvas.height;
+		renderWidth = canvas.width;
+	}
 
 	// Chart.js modifies some canvas values that we want to restore on destroy
 	canvas[EXPANDO_KEY] = {
@@ -124,6 +131,9 @@ var supportsEventListenerOptions = (function() {
 var eventListenerOptions = supportsEventListenerOptions ? {passive: true} : false;
 
 function addEventListener(node, type, listener) {
+	if (!node.addEventListener) {
+		return;
+	}
 	node.addEventListener(type, listener, eventListenerOptions);
 }
 
@@ -157,7 +167,7 @@ function throttled(fn, thisArg) {
 
 		if (!ticking) {
 			ticking = true;
-			helpers.requestAnimFrame.call(window, function() {
+			helpers.requestAnimFrame.call(helpers.window.get(), function() {
 				ticking = false;
 				fn.apply(thisArg, args);
 			});

@@ -496,7 +496,7 @@ module.exports = function(Chart) {
 			document.defaultView.getComputedStyle(el, null).getPropertyValue(property);
 	};
 	helpers.retinaScale = function(chart, forceRatio) {
-		var pixelRatio = chart.currentDevicePixelRatio = forceRatio || window.devicePixelRatio || 1;
+		var pixelRatio = chart.currentDevicePixelRatio = forceRatio || (typeof window !== 'undefined' ? window.devicePixelRatio : 1);
 		if (pixelRatio === 1) {
 			return;
 		}
@@ -589,7 +589,7 @@ module.exports = function(Chart) {
 		} :
 		function(value) {
 			/* global CanvasGradient */
-			if (value instanceof CanvasGradient) {
+			if (typeof CanvasGradient !== 'undefined' && value instanceof CanvasGradient) {
 				value = defaults.global.defaultColor;
 			}
 
